@@ -1,0 +1,108 @@
+local plr = game:GetService("Players").LocalPlayer;
+local protectedInstances = {};
+local isexecutorclosure = is_synapse_function or isexecutorclosure
+
+
+local old;
+old = hookmetamethod(game, "__index", function(self, key)
+   if not checkcaller() and key == "PlatformStand" and self.ClassName == "Humanoid" and self.Parent and plr.Character and self.Parent == plr.Character then -- Prevents PlatformStanding detections
+       return false
+   end
+   return old(self, key)
+end)
+
+local old_isA;
+old_isA = hookfunction(game.IsA, function(...)
+   local self = ...;
+   
+   if table.find(protectedInstances, self) and not checkcaller() then
+       return false
+   end
+   return old_isA(...)
+end)
+
+for i,v in next, getconnections(game.DescendantAdded) do
+   if v.Function and not isexecutorclosure(v.Function) then
+       local old;
+       old = hookfunction(v.Function, function(...)
+           local args = {...};
+           
+           for i,v in next, args do
+               if table.find(protectedInstances, v) then
+                   return
+               end
+           end
+           
+           return old(...)
+       end)
+   end
+end
+
+
+
+game.DescendantAdded:Connect(function(d)
+   if d.ClassName:find("Body") and plr.Character and d:IsDescendantOf(plr.Character) then
+       table.insert(protectedInstances, d)
+       
+       local old_idx;
+       local old_nc;
+       
+       local old_idx2;
+       local old_nc2;
+       
+       old_idx = hookmetamethod(d, "__index", newcclosure(function(self, ...) -- Prevent indexing (checking properties, name, etc)
+           if not checkcaller() and self == d then
+               local s,e = pcall(old_idx, self, ...)
+               
+               if not s then
+                   return old_idx(self, ...)
+               end
+               return
+           end
+           return old_idx(self, ...)
+       end))
+       
+       old_nc = hookmetamethod(d, "__namecall", newcclosure(function(self, ...) -- Prevent namecalling (functions)
+           if not checkcaller() and self == d then
+               local s,e = pcall(old_nc, self, ...)
+               
+               if not s then
+                   return old_nc(self, ...)
+               end
+               return
+           end
+           return old_nc(self, ...)
+       end))
+       
+       
+       old_idx2 = hookmetamethod(d.Parent, "__index", newcclosure(function(self, key)
+           if self == d and not checkcaller() then
+               local s,e = pcall(old_idx2, self, key)
+               
+               if not s then
+                   return old_idx2(self, key)
+               end
+               if tostring(e) == tostring(self) then
+                   return
+               end
+           end
+           return old_idx2(self, key)
+       end))
+       
+       
+       old_nc2 = hookmetamethod(d.Parent, "__namecall", function(self, ...)
+           if not checkcaller() then
+               local s,e = pcall(old_nc2, self, ...)
+               
+               if not s then
+                   return old_nc2(self, ...)
+               end
+               
+               if tostring(e) == tostring(self) then
+                   return
+               end
+           end
+           return old_nc2(self, ...)
+       end)
+   end
+end)
