@@ -1,0 +1,18 @@
+    for _,v in pairs(getgc()) do
+    if type(v) == "function" and getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.LocalScript then
+        if debug.getinfo(v).name == "kick" then
+        hookfunction(v, function(...)
+            end)
+        end
+    end
+end
+
+for _,v in pairs(getgc()) do
+    if type(v) == "function" and getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.LocalScript2 then
+        if debug.getinfo(v).name == "FindFirstChild" then
+        hookfunction(v, function(...)
+                end)
+            end
+        end
+end
+game:GetService("Players").LocalPlayer.PlayerScripts.LocalPartScript:Destroy()
